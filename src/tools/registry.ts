@@ -1,1 +1,1 @@
-import type { Tool, ToolRegistry as TR } from './types.d.ts';
+import type { Tool, ToolCall, ToolResult } from "./types";
