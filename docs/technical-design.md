@@ -76,8 +76,8 @@ type AgentServices = { ... }
 
 // Use 'interface' for class contracts (colocated with implementation)
 interface LLMService { ... }
-interface IToolRegistry { ... }
-interface IConversationHistory { ... }
+interface ToolRegistry { ... }
+interface ConversationHistory { ... }
 ```
 
 ### Key Types
