@@ -91,3 +91,4 @@ src/
 3. **Hard context limit** at 80% capacity (chars/4 heuristic)
 4. **Explicit error feedback** to LLM for self-correction
 5. **Max iterations**: 10 (configurable later)
+6. **Date handling**: Use DateUtility wrapper around date-fns instead of raw JS Date objects
