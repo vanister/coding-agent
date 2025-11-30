@@ -3,13 +3,14 @@
 ## Project Context
 
 This is a **learning project** building a coding agent MVP to understand:
+
 - How LLM-based agents work
 - Tool calling protocols and failure modes
 - Context management and token limits
 - Prompt engineering for small models (qwen2.5-coder:3b)
 
-See [technical-design.md](../docs/technical-design.md) for architecture and design decisions.
-See [tasks.md](../docs/tasks.md) for implementation checklist.
+See [quick-reference.md](../docs/quick-reference.md) for architecture, types, and current phase.
+See [tasks.md](../docs/tasks.md) for complete implementation checklist.
 
 ## Code Preferences
 

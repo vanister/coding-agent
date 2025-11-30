@@ -1,0 +1,92 @@
+# Quick Reference
+
+## Architecture Rules
+
+- **DI**: Services passed to agent, not instantiated internally
+- **Types**: `type` for data shapes, `interface` for class contracts (colocated)
+- **Functional Core**: Pure functions for transforms, classes for state
+- **Validation**: Zod for runtime, TypeScript for compile-time
+- **KISS**: One way to do things, no optional complexity
+
+## Core Types
+
+```typescript
+type Message = { role: 'system' | 'user' | 'assistant'; content: string }
+type ToolCall = { name: string; args: Record<string, unknown> }
+type ToolResult = { success: boolean; data?: unknown; error?: string }
+type Tool<T> = {
+  name: string
+  description: string
+  parameters: Record<string, unknown>
+  argsSchema: z.ZodSchema<T>
+  execute: (args: T) => Promise<ToolResult>
+}
+```
+
+## Tool Protocol
+
+**Tool Call:**
+```json
+{ "tool": "file_read", "args": { "path": "src/index.ts" } }
+```
+
+**Tool Result:**
+```json
+{ "tool_result": { "tool": "file_read", "success": true, "data": "..." } }
+```
+
+**Completion:**
+```json
+{ "done": true, "response": "Final answer..." }
+```
+
+## Parser Strategy
+
+1. Strip markdown fences: `text.replace(/```json\n?/g, '').replace(/```\n?/g, '')`
+2. Parse JSON with Zod
+3. Check `done` field → return | Check `tool` field → execute | Neither → error
+
+## Project Structure
+
+```
+src/
+├── agent/        # core.ts (runAgent), parser.ts, types.d.ts
+├── llm/          # service.ts (OllamaService), types.d.ts
+├── tools/        # registry.ts, file-ops.ts, types.d.ts
+├── context/      # builder.ts, prompts.ts, history.ts, types.d.ts
+└── shared/       # types.d.ts, utils.ts
+```
+
+## Current Phase: Phase 2 - Core Services
+
+**Completed:**
+- ✅ Project setup, dependencies
+- ✅ Ollama installed
+
+**In Progress:**
+- [ ] LLMService interface + OllamaService implementation
+- [ ] ToolRegistry with Zod validation
+- [ ] Parser (stripMarkdown, parseResponse)
+- [ ] file_read/file_write tools
+- [ ] ConversationHistory
+- [ ] buildContext function + SYSTEM_PROMPT
+
+**Next:**
+- Phase 3: Agent loop (runAgent, error recovery, completion)
+- Phase 4: CLI interface
+
+## Code Style
+
+- Guard clauses, early returns, no deep nesting
+- No inline returns with `if`
+- Named functions over arrows (unless clearer)
+- 2-space indent, 100 char limit
+- Minimal comments, no public API docs unless non-obvious
+
+## Key Design Decisions
+
+1. **Tool args always required** (can be `{}`)
+2. **Zod validates in registry** before execute
+3. **Hard context limit** at 80% capacity (chars/4 heuristic)
+4. **Explicit error feedback** to LLM for self-correction
+5. **Max iterations**: 10 (configurable later)
