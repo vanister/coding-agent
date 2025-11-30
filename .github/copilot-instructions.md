@@ -24,6 +24,7 @@ See [tasks.md](../docs/tasks.md) for complete implementation checklist.
 - Don't document public APIs unless non-obvious
 - Simple, concise, single-purpose code
 - 100 char line limit, SOLID principles, test-minded
+- Use specific custom error classes, not generic Error
 
 ### TypeScript/React
 

@@ -7,6 +7,7 @@
 - **Functional Core**: Pure functions for transforms, classes for state
 - **Validation**: Zod for runtime, TypeScript for compile-time
 - **KISS**: One way to do things, no optional complexity
+- **Errors**: Use specific custom error classes, not generic Error
 
 ## Core Types
 
