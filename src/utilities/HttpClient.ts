@@ -14,6 +14,7 @@ export class FetchHttpClient implements HttpClient {
     body: unknown,
     options?: HttpClientOptions
   ): Promise<HttpResponse<T>> {
+    // todo: we're creating an AbortController even if we don't need it
     const controller = new AbortController();
     const timeoutId = options?.timeoutMs
       ? setTimeout(() => controller.abort(), options.timeoutMs)
@@ -46,6 +47,7 @@ export class FetchHttpClient implements HttpClient {
       if (error instanceof Error && error.name === "AbortError") {
         throw new Error(`Request timeout after ${options?.timeoutMs}ms`);
       }
+
       throw error;
     } finally {
       if (timeoutId) {
