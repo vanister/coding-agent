@@ -1,9 +1,12 @@
 import type { z } from "zod";
 
-export type Tool<TArgs = Record<string, unknown>> = {
+export type ToolMetadata = {
   name: string;
   description: string;
   parameters: Record<string, unknown>;
+};
+
+export type Tool<TArgs = Record<string, unknown>> = ToolMetadata & {
   argsSchema: z.ZodSchema<TArgs>;
   execute: (args: TArgs) => Promise<ToolResult>;
 };
