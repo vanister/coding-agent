@@ -1,9 +1,9 @@
 import { z } from "zod";
-import { MessageSchema } from "../llm/schemas.js";
+import { messageSchema } from "../llm/schemas.js";
 
-export const ConversationSchema = z.object({
+export const conversationSchema = z.object({
   id: z.string(),
-  messages: z.array(MessageSchema),
+  messages: z.array(messageSchema),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date()
 });

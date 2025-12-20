@@ -1,4 +1,4 @@
 import type { z } from "zod";
-import type { ConversationSchema } from "./schemas.js";
+import type { conversationSchema } from "./schemas.js";
 
-export type Conversation = z.infer<typeof ConversationSchema>;
+export type Conversation = z.infer<typeof conversationSchema>;

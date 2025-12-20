@@ -6,9 +6,9 @@ import {
   ConversationNotFoundError,
   ConversationDataCorruptedError
 } from "./ConversationErrors.js";
-import { ConversationSchema } from "./schemas.js";
-import { MessageSchema } from "../llm/schemas.js";
-import { DateUtility } from "../utilities/dateUtilities.js";
+import { conversationSchema } from "./schemas.js";
+import { messageSchema } from "../llm/schemas.js";
+import { now } from "../utilities/dateUtilities.js";
 
 export interface ConversationService {
   create(): Promise<void>;
@@ -34,19 +34,19 @@ export class InMemoryConversationService implements ConversationService {
       throw new ConversationAlreadyExistsError(this.conversationId);
     }
 
-    const now = DateUtility.now();
+    const nowTimestamp = now();
     const conversation = {
       id: this.conversationId,
       messages: [],
-      createdAt: now,
-      updatedAt: now
+      createdAt: nowTimestamp,
+      updatedAt: nowTimestamp
     };
 
     await this.repository.create(this.conversationId, conversation);
   }
 
   async add(message: Message): Promise<void> {
-    MessageSchema.parse(message);
+    messageSchema.parse(message);
 
     const conversation = await this.repository.get(this.conversationId);
 
@@ -91,7 +91,7 @@ export class InMemoryConversationService implements ConversationService {
 
   private validateConversation(conversation: Conversation): Conversation {
     try {
-      return ConversationSchema.parse(conversation);
+      return conversationSchema.parse(conversation);
     } catch (error) {
       throw new ConversationDataCorruptedError(
         this.conversationId,

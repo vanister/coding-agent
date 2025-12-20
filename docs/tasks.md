@@ -53,7 +53,7 @@ This list is based off of the [technical-design.md](./technical-design.md) file.
    1. [x] Implement ToolRegistry class with register/execute/list methods
    2. [x] Add Zod validation in execute method
    3. [x] Create file_read tool with args schema
-   4. [ ] Create file_write tool with args schema
+   ~~4. [ ] Create file_write tool with args schema~~
 
 4. **Parser** (`src/agent/parser.ts`)
    1. [ ] Implement stripMarkdown function

@@ -1,12 +1,12 @@
 import type { z } from "zod";
 import type {
-  MessageRoleSchema,
-  MessageSchema,
-  LlmResultSchema,
-  OllamaChatResponseSchema
+  messageRoleSchema,
+  messageSchema,
+  llmResultSchema,
+  ollamaChatResponseSchema
 } from "./schemas.js";
 
-export type MessageRole = z.infer<typeof MessageRoleSchema>;
-export type Message = z.infer<typeof MessageSchema>;
-export type LlmResult = z.infer<typeof LlmResultSchema>;
-export type OllamaChatResponse = z.infer<typeof OllamaChatResponseSchema>;
+export type MessageRole = z.infer<typeof messageRoleSchema>;
+export type Message = z.infer<typeof messageSchema>;
+export type LlmResult = z.infer<typeof llmResultSchema>;
+export type OllamaChatResponse = z.infer<typeof ollamaChatResponseSchema>;

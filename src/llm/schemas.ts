@@ -1,17 +1,17 @@
 import { z } from "zod";
 
-export const MessageRoleSchema = z.enum(["system", "user", "assistant"]);
+export const messageRoleSchema = z.enum(["system", "user", "assistant"]);
 
-export const MessageSchema = z.object({
-  role: MessageRoleSchema,
+export const messageSchema = z.object({
+  role: messageRoleSchema,
   content: z.string()
 });
 
-export const LlmResultSchema = z.object({
+export const llmResultSchema = z.object({
   content: z.string()
 });
 
-export const OllamaChatResponseSchema = z.object({
+export const ollamaChatResponseSchema = z.object({
   message: z.object({
     content: z.string()
   })
