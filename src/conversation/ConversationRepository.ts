@@ -1,6 +1,6 @@
 import type { Message } from "../llm/llm-types.js";
 import type { Conversation } from "./conversation-types.js";
-import { DateUtility } from "../utilities/dateUtilities.js";
+import { now } from "../utilities/dateUtilities.js";
 
 export interface ConversationRepository {
   create(id: string, conversation: Conversation): Promise<void>;
@@ -24,13 +24,13 @@ export class InMemoryConversationRepository implements ConversationRepository {
   async add(id: string, message: Message): Promise<void> {
     const conversation = this.conversations.get(id)!;
     conversation.messages.push(message);
-    conversation.updatedAt = DateUtility.now();
+    conversation.updatedAt = now();
   }
 
   async update(id: string, messages: Message[]): Promise<void> {
     const conversation = this.conversations.get(id)!;
     conversation.messages = messages;
-    conversation.updatedAt = DateUtility.now();
+    conversation.updatedAt = now();
   }
 
   async delete(id: string): Promise<void> {
