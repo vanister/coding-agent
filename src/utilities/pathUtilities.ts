@@ -1,5 +1,7 @@
 import path from "path";
 
+// todo - move these to the file system manager since they're not pure
+
 export function normalizePath(inputPath: string): string {
   return path.normalize(inputPath);
 }
