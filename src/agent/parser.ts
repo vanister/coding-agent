@@ -1,11 +1,5 @@
-import type { ZodError } from 'zod';
-import {
-  toolCallResponseSchema,
-  completionResponseSchema,
-  type ParsedResponse
-} from './schemas.js';
-import { JsonParseError, ResponseValidationError } from './ParserErrors.js';
-import { buildJsonParseErrorMessage, buildValidationErrorMessage } from './parserHelpers.js';
+import { JsonParseError } from './ParserErrors.js';
+import { buildJsonParseErrorMessage } from './parserHelpers.js';
 
 /**
  * Removes markdown code fences from LLM responses.
@@ -29,46 +23,22 @@ export function stripMarkdown(text: string): string {
 }
 
 /**
- * Parses and validates LLM response into structured format.
+ * Parses raw text into JavaScript object.
  *
- * Handles two valid response types:
- * 1. Tool call: { "tool": "tool_name", "args": {...} }
- * 2. Completion: { "done": true, "response": "..." }
+ * Strips markdown fences and attempts JSON.parse.
  *
- * @param rawResponse - Raw string response from LLM
- * @returns Parsed and validated response object
- * @throws {JsonParseError} If JSON parsing fails
- * @throws {ResponseValidationError} If validation against schemas fails
+ * @param rawText - Raw string response from LLM
+ * @returns Parsed JavaScript object
+ * @throws {JsonParseError} If JSON parsing fails (malformed JSON)
  */
-export function parseResponse(rawResponse: string): ParsedResponse {
-  const stripped = stripMarkdown(rawResponse);
+export function parseJson(rawText: string): unknown {
+  const stripped = stripMarkdown(rawText);
 
-  // Parse JSON
-  let parsed: unknown;
   try {
-    parsed = JSON.parse(stripped);
+    return JSON.parse(stripped);
   } catch (error) {
     const parseError = error as Error;
     const message = buildJsonParseErrorMessage(stripped, parseError);
     throw new JsonParseError(message, stripped, parseError);
   }
-
-  // Try completion schema first
-  const completionResult = completionResponseSchema.safeParse(parsed);
-  if (completionResult.success) {
-    return completionResult.data;
-  }
-
-  // Try tool call schema
-  const toolCallResult = toolCallResponseSchema.safeParse(parsed);
-  if (toolCallResult.success) {
-    return toolCallResult.data;
-  }
-
-  // Neither schema matched - throw validation error with parsed object for better debugging
-  const receivedShape =
-    typeof parsed === 'object' && parsed !== null ? (parsed as Record<string, unknown>) : undefined;
-
-  const message = buildValidationErrorMessage(toolCallResult.error, receivedShape);
-  throw new ResponseValidationError(message, stripped, toolCallResult.error);
 }

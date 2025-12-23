@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z, type ZodError } from 'zod';
 
 /**
  * Schema for tool call responses from the LLM.
@@ -25,3 +25,11 @@ export const completionResponseSchema = z
 export type ToolCallResponse = z.infer<typeof toolCallResponseSchema>;
 export type CompletionResponse = z.infer<typeof completionResponseSchema>;
 export type ParsedResponse = ToolCallResponse | CompletionResponse;
+
+/**
+ * Result type for validation operations.
+ * Returns either success with validated data or failure with error details.
+ */
+export type ValidationResult =
+  | { success: true; data: ParsedResponse }
+  | { success: false; errors: string[]; zodError: ZodError };

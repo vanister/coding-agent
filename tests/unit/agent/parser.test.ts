@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { stripMarkdown, parseResponse } from '../../../src/agent/parser.js';
-import { JsonParseError, ResponseValidationError } from '../../../src/agent/ParserErrors.js';
+import { stripMarkdown, parseJson } from '../../../src/agent/parser.js';
+import { JsonParseError } from '../../../src/agent/ParserErrors.js';
 
 describe('stripMarkdown', () => {
   it('should pass through raw JSON unchanged', () => {
@@ -65,117 +65,78 @@ describe('stripMarkdown', () => {
   });
 });
 
-describe('parseResponse', () => {
+describe('parseJson', () => {
   describe('successful parsing', () => {
-    it('should parse tool call response', () => {
+    it('should parse valid JSON', () => {
       const input = '{ "tool": "file_read", "args": { "path": "test.txt" } }';
-      const result = parseResponse(input);
+      const result = parseJson(input);
       expect(result).toEqual({
         tool: 'file_read',
         args: { path: 'test.txt' }
       });
     });
 
-    it('should parse tool call with empty args', () => {
-      const input = '{ "tool": "list_tools", "args": {} }';
-      const result = parseResponse(input);
-      expect(result).toEqual({
-        tool: 'list_tools',
-        args: {}
-      });
-    });
-
-    it('should parse completion response', () => {
+    it('should parse JSON with nested objects', () => {
       const input = '{ "done": true, "response": "Task completed successfully" }';
-      const result = parseResponse(input);
+      const result = parseJson(input);
       expect(result).toEqual({
         done: true,
         response: 'Task completed successfully'
       });
     });
 
-    it('should parse response with markdown fences', () => {
+    it('should parse JSON after stripping markdown fences', () => {
       const input = '```json\n{ "tool": "file_read", "args": { "path": "test.txt" } }\n```';
-      const result = parseResponse(input);
+      const result = parseJson(input);
       expect(result).toEqual({
         tool: 'file_read',
         args: { path: 'test.txt' }
       });
+    });
+
+    it('should parse arrays', () => {
+      const input = '[1, 2, 3]';
+      const result = parseJson(input);
+      expect(result).toEqual([1, 2, 3]);
+    });
+
+    it('should parse primitives', () => {
+      const input = '"hello"';
+      const result = parseJson(input);
+      expect(result).toBe('hello');
     });
   });
 
   describe('JSON parse errors', () => {
     it('should throw JsonParseError for malformed JSON', () => {
       const input = '{ "tool": "file_read", "args": { "path": "test.txt" }';
-      expect(() => parseResponse(input)).toThrow(JsonParseError);
+      expect(() => parseJson(input)).toThrow(JsonParseError);
     });
 
     it('should throw JsonParseError for invalid JSON syntax', () => {
       const input = '{ tool: file_read }';
-      expect(() => parseResponse(input)).toThrow(JsonParseError);
+      expect(() => parseJson(input)).toThrow(JsonParseError);
     });
 
     it('should include raw text in JsonParseError', () => {
       const input = 'not json at all';
       try {
-        parseResponse(input);
+        parseJson(input);
         expect.fail('Should have thrown JsonParseError');
       } catch (error) {
         expect(error).toBeInstanceOf(JsonParseError);
         expect((error as JsonParseError).rawText).toBe(input);
       }
     });
-  });
 
-  describe('validation errors', () => {
-    it('should throw ResponseValidationError for missing tool field', () => {
-      const input = '{ "args": { "path": "test.txt" } }';
-      expect(() => parseResponse(input)).toThrow(ResponseValidationError);
+    it('should throw JsonParseError for trailing commas', () => {
+      const input = '{ "tool": "test", }';
+      expect(() => parseJson(input)).toThrow(JsonParseError);
     });
 
-    it('should throw ResponseValidationError for missing args field', () => {
-      const input = '{ "tool": "file_read" }';
-      expect(() => parseResponse(input)).toThrow(ResponseValidationError);
-    });
-
-    it('should throw ResponseValidationError for missing response field', () => {
-      const input = '{ "done": true }';
-      expect(() => parseResponse(input)).toThrow(ResponseValidationError);
-    });
-
-    it('should throw ResponseValidationError for done: false', () => {
-      const input = '{ "done": false, "response": "Not done yet" }';
-      expect(() => parseResponse(input)).toThrow(ResponseValidationError);
-    });
-
-    it('should throw ResponseValidationError for wrong args type', () => {
-      const input = '{ "tool": "file_read", "args": "should be object" }';
-      expect(() => parseResponse(input)).toThrow(ResponseValidationError);
-    });
-
-    it('should throw ResponseValidationError for wrong response type', () => {
-      const input = '{ "done": true, "response": 123 }';
-      expect(() => parseResponse(input)).toThrow(ResponseValidationError);
-    });
-
-    it('should throw ResponseValidationError for unknown fields (strict mode)', () => {
-      const input = '{ "tool": "file_read", "args": {}, "extra": "field" }';
-      expect(() => parseResponse(input)).toThrow(ResponseValidationError);
-    });
-
-    it('should throw ResponseValidationError for neither tool nor done', () => {
-      const input = '{ "something": "else" }';
-      expect(() => parseResponse(input)).toThrow(ResponseValidationError);
-    });
-
-    it('should include validation errors in ResponseValidationError', () => {
-      const input = '{ "tool": "file_read" }';
-      try {
-        parseResponse(input);
-        expect.fail('Should have thrown ResponseValidationError');
-      } catch (error) {
-        expect(error).toBeInstanceOf(ResponseValidationError);
-      }
+    it('should throw JsonParseError for single quotes', () => {
+      const input = "{ 'tool': 'test' }";
+      expect(() => parseJson(input)).toThrow(JsonParseError);
     });
   });
 });
@@ -185,7 +146,7 @@ describe('Enhanced Error Messages', () => {
     it('should include valid format examples in error message', () => {
       const input = 'not json';
       try {
-        parseResponse(input);
+        parseJson(input);
         expect.fail('Should have thrown JsonParseError');
       } catch (error) {
         expect(error).toBeInstanceOf(JsonParseError);
@@ -199,7 +160,7 @@ describe('Enhanced Error Messages', () => {
     it('should include common fixes in error message', () => {
       const input = '{ "tool": "test", }'; // Trailing comma
       try {
-        parseResponse(input);
+        parseJson(input);
         expect.fail('Should have thrown JsonParseError');
       } catch (error) {
         expect(error).toBeInstanceOf(JsonParseError);
@@ -211,116 +172,12 @@ describe('Enhanced Error Messages', () => {
     it('should show received text for short inputs', () => {
       const input = 'bad';
       try {
-        parseResponse(input);
+        parseJson(input);
         expect.fail('Should have thrown JsonParseError');
       } catch (error) {
         expect(error).toBeInstanceOf(JsonParseError);
         const message = (error as Error).message;
         expect(message).toContain('Received:');
-      }
-    });
-  });
-
-  describe('ResponseValidationError enhancements', () => {
-    it('should include formatted field errors', () => {
-      const input = '{ "tool": "file_read" }'; // Missing args
-      try {
-        parseResponse(input);
-        expect.fail('Should have thrown ResponseValidationError');
-      } catch (error) {
-        expect(error).toBeInstanceOf(ResponseValidationError);
-        const message = (error as Error).message;
-        expect(message).toContain('Problems found:');
-        expect(message).toContain('Field "args"');
-      }
-    });
-
-    it('should show what was provided', () => {
-      const input = '{ "tool": "file_read" }';
-      try {
-        parseResponse(input);
-        expect.fail('Should have thrown ResponseValidationError');
-      } catch (error) {
-        expect(error).toBeInstanceOf(ResponseValidationError);
-        const message = (error as Error).message;
-        expect(message).toContain('You provided:');
-        expect(message).toContain('"tool": "file_read"');
-      }
-    });
-
-    it('should include valid format examples', () => {
-      const input = '{ "something": "else" }';
-      try {
-        parseResponse(input);
-        expect.fail('Should have thrown ResponseValidationError');
-      } catch (error) {
-        expect(error).toBeInstanceOf(ResponseValidationError);
-        const message = (error as Error).message;
-        expect(message).toContain('Expected format');
-        expect(message).toContain('Tool call:');
-        expect(message).toContain('Completion:');
-      }
-    });
-
-    it('should include recovery suggestions', () => {
-      const input = '{ "tool": "file_read" }';
-      try {
-        parseResponse(input);
-        expect.fail('Should have thrown ResponseValidationError');
-      } catch (error) {
-        expect(error).toBeInstanceOf(ResponseValidationError);
-        const message = (error as Error).message;
-        expect(message).toContain('Recovery suggestions:');
-        expect(message).toContain('Add "args" field');
-      }
-    });
-
-    it('should provide specific guidance for done without response', () => {
-      const input = '{ "done": true }';
-      try {
-        parseResponse(input);
-        expect.fail('Should have thrown ResponseValidationError');
-      } catch (error) {
-        expect(error).toBeInstanceOf(ResponseValidationError);
-        const message = (error as Error).message;
-        expect(message).toContain('Add "response" field');
-      }
-    });
-
-    it('should provide specific guidance for wrong done value', () => {
-      const input = '{ "done": false, "response": "test" }';
-      try {
-        parseResponse(input);
-        expect.fail('Should have thrown ResponseValidationError');
-      } catch (error) {
-        expect(error).toBeInstanceOf(ResponseValidationError);
-        const message = (error as Error).message;
-        expect(message).toContain('Set "done" to exactly true');
-      }
-    });
-
-    it('should provide specific guidance for wrong args type', () => {
-      const input = '{ "tool": "file_read", "args": "should be object" }';
-      try {
-        parseResponse(input);
-        expect.fail('Should have thrown ResponseValidationError');
-      } catch (error) {
-        expect(error).toBeInstanceOf(ResponseValidationError);
-        const message = (error as Error).message;
-        expect(message).toContain('Change "args" to an object');
-      }
-    });
-
-    it('should provide guidance for strict mode violations', () => {
-      const input = '{ "tool": "file_read", "args": {}, "extra": "field" }';
-      try {
-        parseResponse(input);
-        expect.fail('Should have thrown ResponseValidationError');
-      } catch (error) {
-        expect(error).toBeInstanceOf(ResponseValidationError);
-        const message = (error as Error).message;
-        expect(message).toContain('Extra fields are not allowed');
-        expect(message).toContain('Remove extra fields');
       }
     });
   });
