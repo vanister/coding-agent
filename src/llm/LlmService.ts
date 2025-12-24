@@ -32,7 +32,7 @@ export class OllamaLlmService implements LlmService {
         throw new OllamaApiError(response.status, response.data);
       }
 
-      if (response.data?.message == null) {
+      if (!response.data?.message) {
         throw new LlmError('Invalid response from Ollama: missing message', response.data);
       }
 

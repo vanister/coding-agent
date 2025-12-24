@@ -67,8 +67,8 @@ _Goal: Build the foundational services that the agent will use_
    2. [x] Design SYSTEM_PROMPT with JSON format instructions
 
 6. **Integration Testing**
-   1. [ ] Test integration with Ollama through `LlmService`
-   2. [ ] Complete integration with all services and components
+   1. [x] Test integration with Ollama through `LlmService`
+   2. [] Complete integration with all services and components
 
 ## Phase 3: Agent Loop Implementation
 
