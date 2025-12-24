@@ -63,8 +63,8 @@ _Goal: Build the foundational services that the agent will use_
    4. [x] Add comprehensive error messages
 
 5. **Context Builder** (`src/context/`)
-   1. [ ] Create buildContext pure function
-   2. [ ] Design SYSTEM_PROMPT with JSON format instructions
+   1. [x] Create buildContext pure function
+   2. [x] Design SYSTEM_PROMPT with JSON format instructions
 
 6. **Integration Testing**
    1. [ ] Test integration with Ollama through `LlmService`
