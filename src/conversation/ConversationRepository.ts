@@ -1,6 +1,7 @@
 import type { Message } from '../llm/schemas.js';
 import type { Conversation } from './schemas.js';
 import { now } from '../utilities/dateUtilities.js';
+import { ConversationNotFoundError } from './ConversationErrors.js';
 
 export interface ConversationRepository {
   create(id: string, conversation: Conversation): Promise<void>;
@@ -10,6 +11,7 @@ export interface ConversationRepository {
   delete(id: string): Promise<void>;
 }
 
+// todo - revisit this to see if the repo should return the id when it creates
 export class InMemoryConversationRepository implements ConversationRepository {
   private conversations: Map<string, Conversation> = new Map();
 
@@ -22,13 +24,19 @@ export class InMemoryConversationRepository implements ConversationRepository {
   }
 
   async add(id: string, message: Message): Promise<void> {
-    const conversation = this.conversations.get(id)!;
+    const conversation = this.conversations.get(id);
+    if (!conversation) {
+      throw new ConversationNotFoundError(id);
+    }
     conversation.messages.push(message);
     conversation.updatedAt = now();
   }
 
   async update(id: string, messages: Message[]): Promise<void> {
-    const conversation = this.conversations.get(id)!;
+    const conversation = this.conversations.get(id);
+    if (!conversation) {
+      throw new ConversationNotFoundError(id);
+    }
     conversation.messages = messages;
     conversation.updatedAt = now();
   }
