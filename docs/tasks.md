@@ -151,7 +151,7 @@ _Goal: Create usable interface for real-world testing_
 ### Technical Requirements
 
 - [ ] Agent can read files
-- [ ] Agent can write files
+- [ ] ~~Agent can write files~~
 - [ ] Agent handles errors gracefully
 - [ ] Agent completes with explicit signal
 - [ ] Context doesn't overflow

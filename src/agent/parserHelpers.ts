@@ -1,5 +1,9 @@
 import type { ZodError } from 'zod';
 
+const VALID_FORMAT_EXAMPLES =
+  'Tool call: { "tool": "file_read", "args": { "path": "test.txt" } }\n' +
+  'Completion: { "done": true, "response": "Task complete" }';
+
 /**
  * Builds enhanced error message for JSON parse failures.
  */
@@ -39,44 +43,6 @@ export function buildValidationErrorMessage(
     `${guidance}`
   );
 }
-
-function extractPosition(errorMsg: string): number | undefined {
-  const match = errorMsg.match(/position (\d+)/i);
-  return match ? parseInt(match[1], 10) : undefined;
-}
-
-function getExcerpt(text: string, position?: number): string {
-  if (!position || text.length < 50) {
-    return `Received: ${text.length > 100 ? text.slice(0, 100) + '...' : text}`;
-  }
-
-  const start = Math.max(0, position - 20);
-  const end = Math.min(text.length, position + 20);
-  const excerpt = text.slice(start, end);
-  const pointer = ' '.repeat(Math.min(20, position - start)) + '^';
-
-  return `Problem near:\n${excerpt}\n${pointer}`;
-}
-
-function getCommonFixes(errorMsg: string): string {
-  const fixes = [];
-
-  if (errorMsg.includes('Unexpected token') || errorMsg.includes('Expected')) {
-    fixes.push('- Check for missing quotes around strings');
-    fixes.push('- Check for trailing commas');
-    fixes.push('- Ensure all strings use double quotes "');
-  }
-  if (errorMsg.includes('Unexpected end') || errorMsg.includes('end of data')) {
-    fixes.push('- Check for missing closing braces }');
-    fixes.push('- Check for missing closing brackets ]');
-  }
-
-  return fixes.length > 0 ? fixes.join('\n') : '- Verify JSON syntax is correct';
-}
-
-const VALID_FORMAT_EXAMPLES =
-  'Tool call: { "tool": "file_read", "args": { "path": "test.txt" } }\n' +
-  'Completion: { "done": true, "response": "Task complete" }';
 
 /**
  * Formats Zod validation errors into a human-readable field-by-field breakdown.
@@ -198,4 +164,38 @@ export function getRecoveryGuidance(shape?: Record<string, unknown>): string {
   }
 
   return guidance.join('\n');
+}
+
+function extractPosition(errorMsg: string): number | undefined {
+  const match = errorMsg.match(/position (\d+)/i);
+  return match ? parseInt(match[1], 10) : undefined;
+}
+
+function getExcerpt(text: string, position?: number): string {
+  if (!position || text.length < 50) {
+    return `Received: ${text.length > 100 ? text.slice(0, 100) + '...' : text}`;
+  }
+
+  const start = Math.max(0, position - 20);
+  const end = Math.min(text.length, position + 20);
+  const excerpt = text.slice(start, end);
+  const pointer = ' '.repeat(Math.min(20, position - start)) + '^';
+
+  return `Problem near:\n${excerpt}\n${pointer}`;
+}
+
+function getCommonFixes(errorMsg: string): string {
+  const fixes = [];
+
+  if (errorMsg.includes('Unexpected token') || errorMsg.includes('Expected')) {
+    fixes.push('- Check for missing quotes around strings');
+    fixes.push('- Check for trailing commas');
+    fixes.push('- Ensure all strings use double quotes "');
+  }
+  if (errorMsg.includes('Unexpected end') || errorMsg.includes('end of data')) {
+    fixes.push('- Check for missing closing braces }');
+    fixes.push('- Check for missing closing brackets ]');
+  }
+
+  return fixes.length > 0 ? fixes.join('\n') : '- Verify JSON syntax is correct';
 }
