@@ -1,19 +1,14 @@
 import type { Message } from '../llm/schemas.js';
 import type { Conversation } from './schemas.js';
 import type { ConversationRepository } from './ConversationRepository.js';
-import {
-  ConversationAlreadyExistsError,
-  ConversationNotFoundError,
-  ConversationDataCorruptedError
-} from './ConversationErrors.js';
-import { conversationSchema } from './schemas.js';
+import { ConversationAlreadyExistsError, ConversationNotFoundError } from './ConversationErrors.js';
 import { messageSchema } from '../llm/schemas.js';
 import { now } from '../utilities/dateUtilities.js';
 
 export interface ConversationService {
-  create(): Promise<void>;
+  create(): Promise<Conversation>;
   add(message: Message): Promise<void>;
-  getAll(): Promise<Message[]>;
+  getAllMessages(): Promise<Message[]>;
   clear(): Promise<void>;
   estimateTokens(): Promise<number>;
 }
@@ -26,11 +21,10 @@ export class InMemoryConversationService implements ConversationService {
     private readonly repository: ConversationRepository
   ) {}
 
-  async create(): Promise<void> {
+  async create(): Promise<Conversation> {
     const existing = await this.repository.get(this.conversationId);
 
     if (existing) {
-      this.validateConversation(existing);
       throw new ConversationAlreadyExistsError(this.conversationId);
     }
 
@@ -43,6 +37,7 @@ export class InMemoryConversationService implements ConversationService {
     };
 
     await this.repository.create(this.conversationId, conversation);
+    return conversation;
   }
 
   async add(message: Message): Promise<void> {
@@ -54,18 +49,16 @@ export class InMemoryConversationService implements ConversationService {
       throw new ConversationNotFoundError(this.conversationId);
     }
 
-    this.validateConversation(conversation);
     await this.repository.add(this.conversationId, message);
   }
 
-  async getAll(): Promise<Message[]> {
+  async getAllMessages(): Promise<Message[]> {
     const conversation = await this.repository.get(this.conversationId);
 
     if (!conversation) {
       return [];
     }
 
-    this.validateConversation(conversation);
     return conversation.messages;
   }
 
@@ -76,27 +69,15 @@ export class InMemoryConversationService implements ConversationService {
       throw new ConversationNotFoundError(this.conversationId);
     }
 
-    this.validateConversation(conversation);
     await this.repository.update(this.conversationId, []);
   }
 
   async estimateTokens(): Promise<number> {
-    const messages = await this.getAll();
+    const messages = await this.getAllMessages();
     const totalChars = messages.reduce((sum, msg) => sum + msg.content.length, 0);
 
     // Heuristic: ~4 chars per token is a common approximation for English text
     // This is intentionally simple for MVP; can be refined with actual tokenizer later
     return Math.ceil(totalChars / InMemoryConversationService.CHARS_PER_TOKEN);
-  }
-
-  private validateConversation(conversation: Conversation): Conversation {
-    try {
-      return conversationSchema.parse(conversation);
-    } catch (error) {
-      throw new ConversationDataCorruptedError(
-        this.conversationId,
-        (error as Error)?.message || 'Unknown validation error'
-      );
-    }
   }
 }

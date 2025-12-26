@@ -2,8 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { InMemoryConversationService } from '../../src/conversation/ConversationService.js';
 import {
   ConversationAlreadyExistsError,
-  ConversationNotFoundError,
-  ConversationDataCorruptedError
+  ConversationNotFoundError
 } from '../../src/conversation/ConversationErrors.js';
 import type { Conversation } from '../../src/conversation/schemas.js';
 import type { Message } from '../../src/llm/schemas.js';
@@ -22,9 +21,14 @@ describe('ConversationService Integration', () => {
 
   describe('create', () => {
     it('should create new conversation with empty messages array', async () => {
-      await conversationService.create();
+      const created = await conversationService.create();
 
       expect(mockRepository.create).toHaveBeenCalledOnce();
+      expect(created.id).toBe(conversationId);
+      expect(created.messages).toEqual([]);
+      expect(created.createdAt).toBeInstanceOf(Date);
+      expect(created.updatedAt).toBeInstanceOf(Date);
+
       const conversation = conversationStore.get(conversationId);
       expect(conversation).toBeDefined();
       expect(conversation?.id).toBe(conversationId);
@@ -70,7 +74,7 @@ describe('ConversationService Integration', () => {
     });
   });
 
-  describe('getAll', () => {
+  describe('getAllMessages', () => {
     it('should retrieve messages from existing conversation', async () => {
       await conversationService.create();
 
@@ -80,7 +84,7 @@ describe('ConversationService Integration', () => {
       await conversationService.add(message1);
       await conversationService.add(message2);
 
-      const messages = await conversationService.getAll();
+      const messages = await conversationService.getAllMessages();
 
       expect(messages).toHaveLength(2);
       expect(messages[0]).toEqual(message1);
@@ -88,7 +92,7 @@ describe('ConversationService Integration', () => {
     });
 
     it('should return empty array when conversation does not exist', async () => {
-      const messages = await conversationService.getAll();
+      const messages = await conversationService.getAllMessages();
 
       expect(messages).toEqual([]);
     });
@@ -161,7 +165,7 @@ describe('ConversationService Integration', () => {
     it('should handle complete conversation lifecycle', async () => {
       // Create
       await conversationService.create();
-      let messages = await conversationService.getAll();
+      let messages = await conversationService.getAllMessages();
       expect(messages).toEqual([]);
 
       // Add messages
@@ -170,7 +174,7 @@ describe('ConversationService Integration', () => {
       await conversationService.add(message1);
       await conversationService.add(message2);
 
-      messages = await conversationService.getAll();
+      messages = await conversationService.getAllMessages();
       expect(messages).toHaveLength(2);
 
       // Estimate tokens
@@ -179,41 +183,12 @@ describe('ConversationService Integration', () => {
 
       // Clear
       await conversationService.clear();
-      messages = await conversationService.getAll();
+      messages = await conversationService.getAllMessages();
       expect(messages).toEqual([]);
 
       // Verify conversation still exists
       const conversation = conversationStore.get(conversationId);
       expect(conversation).toBeDefined();
-    });
-  });
-
-  describe('corrupted data handling', () => {
-    it('should throw ConversationDataCorruptedError for invalid conversation structure', async () => {
-      // Manually insert corrupted data
-      conversationStore.set(conversationId, {
-        id: conversationId,
-        messages: 'not-an-array' as any,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      });
-
-      const message: Message = { role: 'user', content: 'test' };
-
-      await expect(conversationService.add(message)).rejects.toThrow(
-        ConversationDataCorruptedError
-      );
-    });
-
-    it('should throw ConversationDataCorruptedError when getting corrupted data', async () => {
-      conversationStore.set(conversationId, {
-        id: 123 as any,
-        messages: [],
-        createdAt: 'invalid-date' as any,
-        updatedAt: new Date()
-      });
-
-      await expect(conversationService.getAll()).rejects.toThrow(ConversationDataCorruptedError);
     });
   });
 });

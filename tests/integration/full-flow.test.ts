@@ -88,7 +88,7 @@ describe('Full Message Flow Integration', () => {
           content: JSON.stringify(toolResult)
         });
 
-        const conversationMessages = await conversationService.getAll();
+        const conversationMessages = await conversationService.getAllMessages();
         expect(conversationMessages).toHaveLength(2);
         expect(conversationMessages[0]).toEqual(messages[1]);
       }
@@ -135,7 +135,7 @@ describe('Full Message Flow Integration', () => {
           content: validated.data.response
         });
 
-        const conversationMessages = await conversationService.getAll();
+        const conversationMessages = await conversationService.getAllMessages();
         expect(conversationMessages).toHaveLength(2);
         expect(conversationMessages[1].content).toBe('The answer is 4');
       }
@@ -150,7 +150,7 @@ describe('Full Message Flow Integration', () => {
       await conversationService.add({ role: 'assistant', content: 'Hi there!' });
 
       // Get existing history
-      const existingHistory = await conversationService.getAll();
+      const existingHistory = await conversationService.getAllMessages();
       expect(existingHistory).toHaveLength(2);
 
       // New user input
@@ -192,7 +192,7 @@ describe('Full Message Flow Integration', () => {
           content: JSON.stringify(toolResult)
         });
 
-        const finalMessages = await conversationService.getAll();
+        const finalMessages = await conversationService.getAllMessages();
         expect(finalMessages).toHaveLength(4); // Original 2 + new user + assistant
       }
     });
