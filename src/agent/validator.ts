@@ -17,14 +17,14 @@ import { formatZodError } from './parserHelpers.js';
  * @returns ValidationResult with either validated data or array of error messages
  */
 export function validateResponse(parsed: unknown): ValidationResult {
-  // Try completion schema first
   const completionResult = completionResponseSchema.safeParse(parsed);
+
   if (completionResult.success) {
     return { success: true, data: completionResult.data };
   }
 
-  // Try tool call schema
   const toolCallResult = toolCallResponseSchema.safeParse(parsed);
+
   if (toolCallResult.success) {
     return { success: true, data: toolCallResult.data };
   }
@@ -53,14 +53,14 @@ function buildValidationErrors(zodError: ZodError, parsed: unknown): string[] {
     const pathStr = issue.path.join('.');
     const fieldName = pathStr || 'root';
 
-    let errorMsg: string;
+    let errorMsg = `Field "${fieldName}": ${issue.message}`;
+
     if (issue.code === 'invalid_type') {
       const invalidTypeIssue = issue as { received?: string; expected?: string };
       const received = invalidTypeIssue.received || 'unknown';
       const expected = invalidTypeIssue.expected || 'unknown';
+
       errorMsg = `Field "${fieldName}": Expected ${expected} but received ${received}`;
-    } else {
-      errorMsg = `Field "${fieldName}": ${issue.message}`;
     }
 
     errors.push(errorMsg);
@@ -70,6 +70,7 @@ function buildValidationErrors(zodError: ZodError, parsed: unknown): string[] {
   if (typeof parsed === 'object' && parsed !== null) {
     const shape = parsed as Record<string, unknown>;
     const keys = Object.keys(shape);
+
     if (keys.length > 0) {
       errors.push(`Received object with keys: ${keys.join(', ')}`);
     }
