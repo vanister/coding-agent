@@ -81,7 +81,7 @@ _Goal: Build the foundational services that the agent will use_
 _Goal: Create the core agent orchestration logic_
 
 1. **Agent Core** (`src/agent/core.ts`)
-   1. [ ] Implement runAgent function
+   1. [x] Implement runAgent function
    2. [ ] Setup initial context with system prompt
    3. [ ] Create main loop with iteration limit (10-20)
    4. [ ] Add message array management
