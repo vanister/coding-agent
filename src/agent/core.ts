@@ -16,6 +16,14 @@ const DEFAULT_AGENT_CONFIG: AgentConfig = {
   maxTokens: AGENT_MAX_TOKENS
 };
 
+/**
+ * Orchestrates the agent loop: sends user input to LLM, parses responses,
+ * executes tools, and manages conversation state until completion or error.
+ *
+ * The agent runs until: completion signal received, max iterations exceeded,
+ * context limit reached, or unrecoverable error occurs. Parse and validation
+ * errors are sent back to the LLM for self-correction
+ */
 export async function runAgent(
   userInput: string,
   systemPrompt: string,
