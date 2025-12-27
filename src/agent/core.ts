@@ -8,7 +8,7 @@ import {
   AGENT_MAX_TOKENS
 } from '../config.js';
 
-const DEFAULT_AGENT_CONFIG: Required<AgentConfig> = {
+const DEFAULT_AGENT_CONFIG: Partial<AgentConfig> = {
   maxIterations: MAX_AGENT_ITERATIONS,
   contextLimitThreshold: AGENT_CONTEXT_LIMIT_THRESHOLD,
   maxTokens: AGENT_MAX_TOKENS
@@ -17,14 +17,15 @@ const DEFAULT_AGENT_CONFIG: Required<AgentConfig> = {
 // todo - abstract this out into private and helper functions
 export async function runAgent(
   userInput: string,
-  systemPrompt: string,
   services: AgentServices,
-  config?: AgentConfig
+  config: AgentConfig
 ): Promise<AgentResult> {
-  const { maxIterations, contextLimitThreshold, maxTokens } = {
+  const mergedConfig = {
     ...DEFAULT_AGENT_CONFIG,
     ...config
-  };
+  } as Required<AgentConfig>;
+
+  const { systemPrompt, maxIterations, contextLimitThreshold, maxTokens } = mergedConfig;
 
   const metrics: AgentMetrics = {
     iterations: 0,
@@ -54,8 +55,7 @@ export async function runAgent(
     const messages = await services.conversation.getAllMessages();
 
     if (messages.length === 0) {
-      await services.conversation.create();
-      await services.conversation.add({ role: 'system', content: systemPrompt });
+      await services.conversation.create([{ role: 'system', content: systemPrompt }]);
     }
 
     await services.conversation.add({ role: 'user', content: userInput });

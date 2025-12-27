@@ -1,12 +1,16 @@
 import type { Message } from '../llm/schemas.js';
 import type { Conversation } from './schemas.js';
 import type { ConversationRepository } from './ConversationRepository.js';
-import { ConversationAlreadyExistsError, ConversationNotFoundError } from './ConversationErrors.js';
+import {
+  ConversationAlreadyExistsError,
+  ConversationNotFoundError,
+  InvalidMessageError
+} from './ConversationErrors.js';
 import { messageSchema } from '../llm/schemas.js';
 import { now } from '../utilities/dateUtilities.js';
 
 export interface ConversationService {
-  create(): Promise<Conversation>;
+  create(initialMessages?: Message[]): Promise<Conversation>;
   add(message: Message): Promise<void>;
   getAllMessages(): Promise<Message[]>;
   clear(): Promise<void>;
@@ -21,7 +25,7 @@ export class InMemoryConversationService implements ConversationService {
     private readonly repository: ConversationRepository
   ) {}
 
-  async create(): Promise<Conversation> {
+  async create(initialMessages?: Message[]): Promise<Conversation> {
     const existing = await this.repository.get(this.conversationId);
 
     if (existing) {
@@ -31,7 +35,7 @@ export class InMemoryConversationService implements ConversationService {
     const nowTimestamp = now();
     const conversation = {
       id: this.conversationId,
-      messages: [],
+      messages: initialMessages ?? [],
       createdAt: nowTimestamp,
       updatedAt: nowTimestamp
     };
@@ -41,7 +45,10 @@ export class InMemoryConversationService implements ConversationService {
   }
 
   async add(message: Message): Promise<void> {
-    messageSchema.parse(message);
+    const parseResult = messageSchema.safeParse(message);
+    if (!parseResult.success) {
+      throw new InvalidMessageError(parseResult.error.message);
+    }
 
     const conversation = await this.repository.get(this.conversationId);
 

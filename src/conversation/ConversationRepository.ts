@@ -11,7 +11,6 @@ export interface ConversationRepository {
   delete(id: string): Promise<void>;
 }
 
-// todo - revisit this to see if the repo should return the id when it creates
 export class InMemoryConversationRepository implements ConversationRepository {
   private conversations: Map<string, Conversation> = new Map();
 

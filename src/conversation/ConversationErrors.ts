@@ -18,3 +18,10 @@ export class ConversationDataCorruptedError extends Error {
     this.name = 'ConversationDataCorruptedError';
   }
 }
+
+export class InvalidMessageError extends Error {
+  constructor(details: string) {
+    super(`Invalid message: ${details}`);
+    this.name = 'InvalidMessageError';
+  }
+}
