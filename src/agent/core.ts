@@ -77,7 +77,6 @@ export async function runAgent(
 
       if (!parseResult.success) {
         metrics.parseErrors++;
-
         const errorMessage = buildParseErrorMessage(parseResult.error, services.tools);
         await services.conversation.add(errorMessage);
 
@@ -88,7 +87,6 @@ export async function runAgent(
 
       if (!validated.success) {
         metrics.parseErrors++;
-
         const errorMessage = buildValidationErrorMessage(validated);
         await services.conversation.add(errorMessage);
 
